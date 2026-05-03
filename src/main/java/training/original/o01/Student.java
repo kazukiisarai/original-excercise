@@ -1,5 +1,4 @@
 package training.original.o01;
-
 public class Student {
   private int id;
   private String name;
@@ -10,6 +9,18 @@ public class Student {
     this.id = id;
     this.name = validateName(name);
     this.scores = validateScores(scores);
+  }
+  //コピー用のコンストラクタ
+  public Student(Student other){
+    if(other == null ){
+      this.id = 0;
+      this.name = "unknown";
+      scores = new int[0];
+      return;
+    }
+    this.id = other.id;
+    this.name = other.name;
+    this.scores = other.scores.clone();
   }
   //ゲッター
   public int getId(){

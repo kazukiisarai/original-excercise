@@ -14,15 +14,15 @@ public class ScoreBook {
     //同じ処理をリストではなく配列のみで実装
     int count = 0;
     for(int i=0;i<students.length;i++){
-      if(students[i]==null){
+      if(students[i]!=null){
         count++;
       }
     }
-    Student[] newStudents = new Student[students.length-count];
+    Student[] newStudents = new Student[count];
     int index = 0;
     for(int i=0;i<students.length;i++){
       if(students[i]!=null){
-        newStudents[index] = students[i];
+        newStudents[index] = new Student(students[i]);
         index++;
       }
     }
@@ -35,7 +35,7 @@ public class ScoreBook {
     if(index<0||index>=students.length){
       return null;
     }
-    return this.students[index];
+    return new Student(this.students[index]);
   }
   public Student topStudent(){
     if(this.students.length == 0){
@@ -48,7 +48,7 @@ public class ScoreBook {
         topStudent = student;
       }
     }
-    return topStudent;
+    return new Student(topStudent);
   }
   public double classAverage(){
     if(students.length==0){
