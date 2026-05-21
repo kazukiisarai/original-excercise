@@ -71,7 +71,6 @@ public class BankService {
     } 
     return sum; 
   }
-  //久々に拡張for文の練習もしときたかったのであえて使いましたが、for(int i=0;i<this.accounts;i++){System.out.println("口座リスト"+i+"番目のデータ");this.accounts[i].printInfo();}のほうが見やすいかなと思いながら書いてます。
   public void printAll(){
     for(BankAccount account:this.accounts){
       account.printInfo();
