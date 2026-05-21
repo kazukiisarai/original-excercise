@@ -1,31 +1,37 @@
 package training.original.o02;
-
+import java.util.Objects;
 public class BankAccount {
   private int id;
   private String ownerName ;
   private int balance;
 
   public BankAccount(int id,String ownerName, int balance){
+    if(id<=0){
+      throw new IllegalArgumentException("IDは正の整数です。");
+    }
     this.id = id;
     this.ownerName = validOwnerName(ownerName);
     this.balance = validBalance(balance);
   }
   public BankAccount(BankAccount other){
+    if(other == null){
+      throw new IllegalArgumentException("コピー元のインスタンスがnullです");
+    }
     this.id = other.id;
     this.ownerName = other.ownerName;
     this.balance = other.balance;
   }
   
 
-  private String validOwnerName(String ownerName){
+  private static String validOwnerName(String ownerName){
     if(ownerName == null||ownerName.isBlank()){
-      ownerName = "unknown";
+      throw new IllegalArgumentException("名前はnullまたは空白を認めません");
     }
     return ownerName;
   }
-  private int validBalance(int balance){
+  private static int validBalance(int balance){
     if(balance<0){
-      balance = 0;
+      throw new IllegalArgumentException("残高は0以上の整数です");
     }
     return balance;
   }
@@ -39,22 +45,24 @@ public class BankAccount {
     return this.balance;
   }
   public void setOwnerName(String ownerName){
-    this.ownerName = ownerName;
+    this.ownerName = validOwnerName(ownerName);
   }
   public void deposit(int amount){
-    if(amount>0){
-      this.balance += amount;
+    if(amount<=0){
+      throw new IllegalArgumentException("金額は正の整数です");
     }
+    this.balance += amount;
     return;
   }
   public boolean withdraw(int amount){
-  if(amount>balance||amount<0){
+  if(amount<=0){
+      throw new IllegalArgumentException("金額は正の整数です");
+    }
+  if(amount>balance){
       return false;
     }
-  else{
       this.balance -= amount;
       return true;
-    }
   }
   public void printInfo(){
     System.out.println("口座ID : "+this.id);
@@ -71,5 +79,13 @@ public class BankAccount {
     }
     BankAccount other = (BankAccount) obj;
     return this.id == other.id;
+  }
+  @Override
+  public int hashCode(){
+    return Objects.hash(id);
+  }
+  @Override
+  public String toString(){
+    return "口座{id:"+this.id+"名義人"+this.ownerName+"残高"+this.balance+"}";
   }
 }

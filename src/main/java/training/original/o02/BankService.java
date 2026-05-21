@@ -6,11 +6,15 @@ public class BankService {
   public  BankService(BankAccount[] accounts){
     if(accounts == null){
       this.accounts = new BankAccount[0];
+      return ;
     }
     this.accounts = validAccounts(accounts);
   }
 
-  private BankAccount[] validAccounts(BankAccount[] accounts){
+  private static BankAccount[] validAccounts(BankAccount[] accounts){
+    if(accounts == null){
+      return new BankAccount[0];
+    }
     int nonNullCount = 0;
     for(int i=0;i<accounts.length;i++){
       if(accounts[i]!=null){
@@ -19,37 +23,35 @@ public class BankService {
     }
     BankAccount[] validAccount = new BankAccount[nonNullCount];
     int index =0;
-    for(int i=0;i<validAccount.length;i++){
+    for(int i=0;i<accounts.length;i++){
       if(accounts[i]!=null){
-        validAccount[index]=accounts[i];
+        validAccount[index]=new BankAccount(accounts[i]);
         index++;
       }
     }
     return validAccount;
   }
   public BankAccount findById(int id){
-    for(int i=0;i<this.accounts.length;i++){
-      if(this.accounts[i].getId()==id){
-        return new BankAccount(this.accounts[i]);
-      }
+    BankAccount account = findId(id);
+    if(account == null){
+      return null;
     }
-    return null;
+    return new BankAccount(account);
   }
-  public boolean transfar(int fromId,int toId,int amount){
+  public boolean transfer(int fromId,int toId,int amount){
     if(amount<=0){
       return false;
     }
-    if(findIdCount(fromId)==0){
+    BankAccount from = findId(fromId);
+    BankAccount to = findId(toId);
+    if(from == null || to == null){
       return false;
     }
-    if(findIdCount(toId)==0){
+    if(!from.withdraw(amount)){
       return false;
     }
-    if(amount>findId(fromId).getBalance()){
-      return false;
-    }
-    findId(fromId).withdraw(amount);
-    findId(toId).deposit(amount);
+    
+    to.deposit(amount);
     return true;
     
   }
@@ -62,22 +64,12 @@ public class BankService {
     }
     return null;
   }
-  //transferのためのヘルパーメソッド。受け取ったidが見つかればカウントする。
-  private int findIdCount(int id){
-    int findFromIdCount = 0;
-    for(int i=0;i<this.accounts.length;i++){
-      if(this.accounts[i].getId()==id){
-        findFromIdCount++;
-      }
-    }
-    return findFromIdCount;
-  }
-  public int totalBalance(){
-    int sum = 0;
-    for(int i=0;i<this.accounts.length;i++){
-      sum += findId(i).getBalance();
-    }
-    return sum;
+  public int totalBalance(){ 
+    int sum = 0; 
+    for(int i=0;i<this.accounts.length;i++){ 
+      sum += this.accounts[i].getBalance(); 
+    } 
+    return sum; 
   }
   //久々に拡張for文の練習もしときたかったのであえて使いましたが、for(int i=0;i<this.accounts;i++){System.out.println("口座リスト"+i+"番目のデータ");this.accounts[i].printInfo();}のほうが見やすいかなと思いながら書いてます。
   public void printAll(){
