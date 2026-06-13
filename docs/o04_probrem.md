@@ -1,21 +1,29 @@
-# 課題：Student と Grader による成績管理
+# Java 練習問題：Student と Grader による成績管理
 
-## 目的
+## 概要
 
-`Student` クラスと `Grader` クラスを実装し、学生ごとの成績を管理するプログラムを作成してください。
+学生ごとの成績を管理するプログラムを作成してください。
 
-この課題では、以下を扱います。
+この問題では、学生を表す `Student` クラスと、学生ごとの点数を管理する `Grader` クラスを実装します。
 
-- `HashMap` のキーとして自作クラスを使う
-- `equals` / `hashCode` を実装する
-- `Map` / `Set` を使ってデータを管理する
-- 外部から渡されたオブジェクトによって内部状態が壊れないようにする
+`Student` は成績表のキーとして扱います。  
+そのため、「同じ学生である」とはどういうことかをクラス側で定義し、その前提で `Map` や `Set` を正しく扱えるようにしてください。
+
+---
+
+## パッケージ
+
+すべてのクラスは次のパッケージに配置すること。
+
+```java
+package training.original.o04;
+```
 
 ---
 
 ## 作成するクラス
 
-以下の3クラスを作成してください。
+以下のクラスを作成してください。
 
 ```text
 Student
@@ -25,216 +33,264 @@ Main
 
 ---
 
-## Student クラス
+## 制約事項
 
-学生を表すクラスです。
+以下は使用しないこと。
 
-### フィールド
+```text
+Stream API
+ラムダ式
+record
+Lombok
+```
 
-以下のフィールドを持たせてください。
+`Map`、`Set`、`HashMap`、`HashSet` は使用してください。  
+繰り返し処理は `for` 文または拡張for文で実装してください。
 
-```java
-private int id;
-private String name;
+---
+
+# 1. Student クラス
+
+## 1.1 役割
+
+`Student` は、学生1人分の情報を表すクラスです。
+
+保持する情報は以下の通りです。
+
+```text
+学生番号
+名前
+```
+
+外部からフィールドを直接変更できないようにしてください。
+
+---
+
+## 1.2 生成時のルール
+
+`Student` を生成するとき、以下の情報を受け取ります。
+
+```text
+id
+name
+```
+
+それぞれ次のルールで扱ってください。
+
+## id
+
+```text
+0以下の場合:
+  IllegalArgumentException
+```
+
+## name
+
+```text
+null または空白のみの場合:
+  "unknown"
 ```
 
 ---
 
-### コンストラクタ
+## 1.3 コピー用の生成処理
 
-```java
-public Student(int id, String name)
-```
+`Student` には、別の `Student` と同じ内容を持つ新しい `Student` を作る処理を用意してください。
 
-以下のルールで初期化してください。
+```text
+コピー元が null の場合:
+  IllegalArgumentException
 
-- `id <= 0` の場合は `IllegalArgumentException` を投げる
-- `name` が `null` または空白のみの場合は `"unknown"` として扱う
-
----
-
-### コピーコンストラクタ
-
-```java
-public Student(Student other)
-```
-
-以下のルールで初期化してください。
-
-- `other == null` の場合は `IllegalArgumentException` を投げる
-- `other` と同じ内容を持つ別インスタンスを生成する
-
----
-
-### メソッド
-
-以下のメソッドを実装してください。
-
-```java
-public int getId()
-public String getName()
-public void setName(String name)
-@Override public boolean equals(Object obj)
-@Override public int hashCode()
-@Override public String toString()
+コピー元が null でない場合:
+  id と name の内容を引き継ぐ
 ```
 
 ---
 
-### 同一判定のルール
+## 1.4 同一学生の扱い
 
-`Student` は、`id` が同じなら同じ学生とみなしてください。
+`id` が同じ `Student` は、名前が異なっていても同一学生として扱ってください。
 
-つまり、次の2つは同じ学生として扱います。
+例：
 
 ```java
 new Student(1, "Taro")
 new Student(1, "Jiro")
 ```
 
+上記2つは、同じ学生として扱います。
+
+この同一性は、`Map` のキーや `Set` の要素として扱う場合にも反映されるようにしてください。
+
 ---
 
-## Grader クラス
+## 1.5 提供する操作
 
-学生と点数を管理するクラスです。
+`Student` では、以下の操作を提供してください。
 
-### フィールド
+```text
+学生番号を取得する
+名前を取得する
+名前を変更する
+文字列表現を返す
+```
 
-以下のフィールドを持たせてください。
+## 名前の変更
 
-```java
-private Map<Student, Integer> scores;
+名前を変更するときも、生成時と同じ名前補正ルールを適用してください。
+
+---
+
+# 2. Grader クラス
+
+## 2.1 役割
+
+`Grader` は、学生と点数の対応を管理する成績表クラスです。
+
+内部では、学生をキー、点数を値として管理してください。
+
+```text
+Student -> score
 ```
 
 実装には `HashMap` を使用してください。
 
 ---
 
-### コンストラクタ
+## 2.2 生成時のルール
 
-```java
-public Grader()
-```
-
-空の成績表を作成してください。
+`Grader` を生成するとき、空の成績表を作成してください。
 
 ---
 
-### メソッド
+## 2.3 提供する操作
 
-以下のメソッドを実装してください。
+`Grader` では、以下の操作を提供してください。
 
-```java
-public void addOrUpdate(Student student, int score)
-public boolean remove(Student student)
-public int getScore(Student student)
-public double average()
-public Student topStudent()
-public Set<Student> passedStudents(int passScore)
-public void printAll()
+```text
+学生と点数を追加または更新する
+学生を削除する
+学生の点数を取得する
+平均点を取得する
+最高点の学生を取得する
+合格点以上の学生集合を取得する
+登録内容をすべて表示する
 ```
 
 ---
 
-## 各メソッドの仕様
+## 学生と点数の追加・更新
 
-### addOrUpdate
+学生と点数を登録します。  
+すでに同じ学生が登録されている場合は、点数を更新してください。
 
-```java
-public void addOrUpdate(Student student, int score)
+```text
+student == null の場合:
+  IllegalArgumentException
+
+score < 0 の場合:
+  0 として扱う
+
+score > 100 の場合:
+  100 として扱う
 ```
 
-学生と点数を追加または更新します。
-
-- `student == null` の場合は `IllegalArgumentException` を投げる
-- `score < 0` の場合は `0` として扱う
-- `score > 100` の場合は `100` として扱う
-- すでに同じ学生が登録されている場合は、点数を更新する
+登録時、外部から渡された `Student` オブジェクトをあとから変更しても、`Grader` 内部のキー情報が影響を受けないようにしてください。
 
 ---
 
-### remove
+## 学生の削除
 
-```java
-public boolean remove(Student student)
+指定された学生を削除してください。
+
+```text
+削除できた場合:
+  true
+
+対象が存在しない場合:
+  false
+
+student == null の場合:
+  false
 ```
-
-指定された学生を削除します。
-
-- 削除できた場合は `true`
-- 対象が存在しない場合は `false`
-- `student == null` の場合は `false`
 
 ---
 
-### getScore
+## 点数の取得
 
-```java
-public int getScore(Student student)
+指定された学生の点数を返してください。
+
+```text
+存在する場合:
+  登録されている点数
+
+存在しない場合:
+  -1
+
+student == null の場合:
+  -1
 ```
-
-指定された学生の点数を返します。
-
-- 存在しない場合は `-1`
-- `student == null` の場合は `-1`
 
 ---
 
-### average
+## 平均点
 
-```java
-public double average()
+登録されている全学生の平均点を返してください。
+
+```text
+学生が0人の場合:
+  0.0
 ```
-
-登録されている全学生の平均点を返します。
-
-- 学生が0人の場合は `0.0`
 
 ---
 
-### topStudent
+## 最高点の学生
 
-```java
-public Student topStudent()
+最も点数が高い学生を返してください。
+
+```text
+学生が0人の場合:
+  null
+
+同点の場合:
+  どちらを返してもよい
 ```
 
-最も点数が高い学生を返します。
-
-- 学生が0人の場合は `null`
-- 同点の場合は、どちらを返してもよい
-- 戻り値として返す `Student` は、内部で保持しているインスタンスそのものにしないこと
+返した `Student` オブジェクト経由で、`Grader` 内部の状態が変更されないようにしてください。
 
 ---
 
-### passedStudents
+## 合格点以上の学生集合
 
-```java
-public Set<Student> passedStudents(int passScore)
+指定された合格点以上の学生を `Set<Student>` として返してください。
+
+```text
+score >= passScore
 ```
 
-指定された合格点以上の学生を `Set<Student>` として返します。
+実装には `HashSet` を使用してください。
 
-- `score >= passScore` の学生を返す
-- 実装には `HashSet` を使用する
-- 返却する `Set` に入れる `Student` は、内部で保持しているインスタンスそのものにしないこと
+返却する `Set` に入れる `Student` は、`Grader` 内部で保持しているインスタンスそのものにしないでください。
 
 ---
 
-### printAll
-
-```java
-public void printAll()
-```
+## 全件表示
 
 登録されている学生と点数をすべて表示してください。
 
-表示形式は自由ですが、学生番号・氏名・点数が分かるようにしてください。
+表示形式は自由ですが、少なくとも以下が確認できるようにしてください。
+
+```text
+学生番号
+名前
+点数
+```
 
 ---
 
-## Main クラスで確認すること
+# 3. 動作確認
 
-以下のようなデータを使って、各メソッドの動作を確認してください。
+`Main` クラスを作成し、以下のようなデータで動作確認してください。
 
 ```java
 Grader grader = new Grader();
@@ -259,54 +315,90 @@ s1.setName("Changed");
 grader.printAll();
 ```
 
----
+確認すること。
 
-## 制約
+```text
+s1 と s3 は同じ学生として扱われる
+id=1 の点数は後から登録した 70 に更新される
+getScore(s1) と getScore(s3) は同じ点数を返す
+s1.setName("Changed") の後も、Grader内部の表示が意図せず変わらない
+```
 
-- `Student` のフィールドは `private` にしてください
-- `Grader` の `scores` フィールドは `private` にしてください
-- `Map` の実装には `HashMap` を使用してください
-- `Set` の実装には `HashSet` を使用してください
-- ラムダ式・Stream API は使用しないでください
-- `for` 文または拡張 `for` 文で実装してください
-
----
-
-## 考察事項
-
-実装後、以下について自分の言葉で説明してください。
-
-1. `Student` を `HashMap` のキーにするために、なぜ `equals` と `hashCode` が重要なのか
-2. `new Student(1, "Taro")` と `new Student(1, "Jiro")` が同じキー扱いになる理由
-3. `addOrUpdate` で受け取った `Student` をそのまま `Map` に入れると何が問題になりうるか
-4. `getScore` で存在しない学生に `-1` を返す設計の良い点と悪い点
-5. `HashSet` が重複を除ける仕組み
+なお、同じ学生番号で点数を更新した場合、キーとして保持されている学生名が最初に登録した名前のままになるか、後から登録した名前に置き換わるかは設計によって異なります。  
+どちらの設計にしたかを説明できるようにしてください。
 
 ---
+
+# 4. 境界条件の確認
+
+以下も確認してください。
+
+```text
+Student の id が 0 以下
+Student の name が null
+Student の name が空白のみ
+Student のコピー元が null
+addOrUpdate に null の Student を渡す
+addOrUpdate に負の点数を渡す
+addOrUpdate に 100 より大きい点数を渡す
+remove に null を渡す
+remove に未登録の Student を渡す
+getScore に null を渡す
+getScore に未登録の Student を渡す
+学生が0人の状態で average を呼ぶ
+学生が0人の状態で topStudent を呼ぶ
+合格者が0人の状態で passedStudents を呼ぶ
+```
+
+---
+
+# 5. 実装後の確認事項
+
+実装後、次の観点を説明できるようにしてください。
+
+```text
+1. Student の同一性をどの値で判断する設計にしたか。
+2. 同じ学生番号で名前が異なる Student を登録したとき、なぜ同じ学生として扱われるのか。
+3. addOrUpdate で受け取った Student をそのまま内部に保持すると、どのような問題が起こりうるか。
+4. 同じ学生番号の Student を再登録したとき、点数と名前がそれぞれどう扱われる設計にしたか。
+5. getScore で未登録の場合に -1 を返す設計の利点と欠点。
+6. passedStudents で返した Set や、その中の Student を外部で操作した場合、Grader 内部に影響するか。
+7. Map と Set が、Student の同一性をどのように利用しているか。
+```
+
+---
+
+# 6. ヒント
+
+必要になった場合だけ開いてください。
 
 <details>
-<summary>ヒント：HashMap のキーについて</summary>
+<summary>自作クラスをMapのキーとして使うとき</summary>
 
-`HashMap` は、キーを探すときに `hashCode` と `equals` を使います。
+`Map` は、キーが同じかどうかを判断して値を登録・取得します。
 
-`equals` で同じとみなすオブジェクトは、`hashCode` も同じ値になるように実装する必要があります。
+自作クラスをキーにする場合、そのクラスにおける「同じ」とは何かを正しく定義する必要があります。
+
+今回であれば、学生番号が同じなら同じ学生として扱う設計です。
 
 </details>
 
 <details>
-<summary>ヒント：同じキーで put した場合</summary>
+<summary>同じキーでputした場合</summary>
 
-`HashMap` に、すでに存在するキーと同じキーを `put` すると、新しい要素が増えるのではなく、対応する値が更新されます。
+`Map` に、すでに存在するキーと同じキーを登録すると、新しい要素が増えるのではなく、対応する値が更新されます。
 
-ただし、キーとして保持されているオブジェクト自体がどうなるかは、実装結果を観察してください。
+ただし、キーとして保持されているオブジェクト自体を差し替えるかどうかは、実装の仕方によって変わります。
+
+例えば、いったん削除してから登録し直す設計にすると、キー側の情報も新しくできます。
 
 </details>
 
 <details>
-<summary>ヒント：内部状態を守る設計</summary>
+<summary>内部状態を守る考え方</summary>
 
-外部から渡されたオブジェクトをそのまま内部に保持すると、外部側の変更が内部状態に影響する可能性があります。
+外部から渡されたオブジェクトをそのまま内部に保持すると、外部側でそのオブジェクトが変更されたときに、内部状態も影響を受ける可能性があります。
 
-必要に応じて、コピーを作って保持する設計を検討してください。
+内部で独立して管理したい場合は、受け取ったオブジェクトと同じ内容を持つ別インスタンスを作って保持します。
 
 </details>

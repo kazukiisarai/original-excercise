@@ -2,16 +2,12 @@
 
 ## 概要
 
-銀行の口座情報と、複数の口座を管理・操作するサービスプログラムを作成します。
+銀行口座と、複数の口座を管理するサービスを作成してください。
 
-この問題では、次の点を意識してください。
+この問題では、1つの口座を表す `BankAccount` クラスと、複数の口座を管理して送金処理などを行う `BankService` クラスを実装します。
 
-* カプセル化
-* データ保護
-* コピーコンストラクタ
-* publicメソッドとprivateメソッドの責務分割
-* `static` にしてよいメソッドと、インスタンスメソッドにすべきメソッドの区別
-* 例外を投げるべき失敗と、戻り値で表すべき失敗の区別
+`BankAccount` 単体での操作と、`BankService` 経由での操作では、失敗の扱いが異なる場面があります。  
+それぞれの責務を分けて設計してください。
 
 ---
 
@@ -19,108 +15,149 @@
 
 以下は使用しないこと。
 
-* Stream API
-* `List` / `ArrayList`
-* `record`
-* Lombok
+```text
+Stream API
+List / ArrayList
+record
+Lombok
+```
 
-配列、`for` 文、`if` 文、通常のクラス定義だけで実装してください。
-
----
-
-# 1. BankAccount クラスの仕様
-
-銀行口座1つ分の情報を管理するクラスです。  
-不正なデータが入らないように設計してください。
+配列、`for` 文、`if` 文、通常のクラス定義を使って実装してください。
 
 ---
 
-## 1.1 フィールド
+# 1. BankAccount クラス
 
-すべて `private` にしてください。
+## 1.1 役割
 
-* `id`（整数）：口座ID
-* `ownerName`（文字列）：名義人
-* `balance`（整数）：残高
+`BankAccount` は、銀行口座1つ分の情報を表すクラスです。
 
----
+保持する情報は以下の通りです。
 
-## 1.2 コンストラクタ
+```text
+口座ID
+名義人
+残高
+```
 
-### `BankAccount(int id, String ownerName, int balance)`
-
-引数の値を各フィールドに設定します。
-
-ただし、以下の契約違反が渡された場合は、オブジェクトの生成を拒否し、`IllegalArgumentException` を投げてください。
-
-* `id` が `0` 以下の場合
-* `ownerName` が `null`、空文字（`""`）、または空白のみ（`" "`など）の場合
-* `balance` が `0` 未満の場合
+外部からフィールドを直接変更できないように設計してください。
 
 ---
 
-## 1.3 コピーコンストラクタ
+## 1.2 生成時のルール
 
-### `BankAccount(BankAccount other)`
+`BankAccount` を生成するとき、以下の情報を受け取ります。
 
-`other` と同じ内容を持つ、別インスタンスの `BankAccount` を作成してください。
+```text
+id
+ownerName
+balance
+```
 
-### other が null の場合
+それぞれ次のルールで扱ってください。
 
-今回は、`IllegalArgumentException` を投げてください。
+## id
 
-理由は、`BankAccount` の通常コンストラクタでは `id <= 0` や不正な `ownerName` を許さない設計にしているため、`null` からダミー口座を作るより、コピー元が不正であることを明示する方が一貫するからです。
+```text
+0以下の場合:
+  IllegalArgumentException
+```
 
-### other が null でない場合
+## ownerName
 
-以下の値をコピーしてください。
+```text
+null、空文字、空白のみの場合:
+  IllegalArgumentException
+```
 
-* `id`
-* `ownerName`
-* `balance`
+## balance
 
-`BankAccount` のフィールドは、今回すべて `int` または `String` です。  
-`String` は不変オブジェクトとして扱えるため、`Student` の `int[] scores` のような配列コピーは不要です。
+```text
+0未満の場合:
+  IllegalArgumentException
+```
+
+不正な値から口座を作成しないでください。
 
 ---
 
-## 1.4 メソッド
+## 1.3 コピー用の生成処理
 
-### `getId()`
+`BankAccount` には、別の `BankAccount` と同じ内容を持つ新しい `BankAccount` を作る処理を用意してください。
 
-`id` を返す。
+```text
+コピー元が null の場合:
+  IllegalArgumentException
 
-### `getOwnerName()`
+コピー元が null でない場合:
+  id, ownerName, balance の内容を引き継ぐ
+```
 
-`ownerName` を返す。
+`BankAccount` が保持する値は、この問題では `int` と `String` のみです。
 
-### `getBalance()`
+---
 
-`balance` を返す。
+## 1.4 提供する操作
 
-### `setOwnerName(String ownerName)`
+`BankAccount` では、以下の操作を提供してください。
 
-名義人を更新する。  
-コンストラクタと同じルールで、不正な文字列は `IllegalArgumentException` で弾く。
+```text
+口座IDを取得する
+名義人を取得する
+残高を取得する
+名義人を変更する
+入金する
+出金する
+口座情報を表示する
+```
 
-### `deposit(int amount)`
+## 名義人の変更
 
-口座に入金する。
+生成時と同じ名義人ルールを適用してください。
 
-* `amount` が `0` 以下の場合は、操作として不正であるため `IllegalArgumentException` を投げる。
-* 成功した場合は残高を増やす。
+```text
+null、空文字、空白のみの場合:
+  IllegalArgumentException
+```
 
-### `withdraw(int amount)`
+## 入金
 
-口座から出金する。
+指定された金額を残高に加算します。
 
-* `amount` が `0` 以下の場合は、操作として不正であるため `IllegalArgumentException` を投げる。
-* 残高不足の場合は、業務上普通に起こりうる失敗として `false` を返す。
-* 成功した場合は残高を減らして `true` を返す。
+```text
+amount <= 0 の場合:
+  IllegalArgumentException
 
-### `printInfo()`
+成功した場合:
+  残高を増やす
+```
 
-口座情報を標準出力に表示する。
+## 出金
+
+指定された金額を残高から減算します。
+
+```text
+amount <= 0 の場合:
+  IllegalArgumentException
+
+残高不足の場合:
+  false
+
+成功した場合:
+  残高を減らして true
+```
+
+## 表示
+
+口座情報を標準出力に表示してください。
+
+表示形式は自由ですが、少なくとも以下が確認できるようにしてください。
+
+```text
+id
+ownerName
+balance
+```
 
 出力例：
 
@@ -128,169 +165,139 @@
 [ID: 101] Name: Taro, Balance: 5000
 ```
 
-細かい表示形式は多少違ってもよいですが、`id`、`ownerName`、`balance` が確認できるようにしてください。
+---
+
+## 1.5 同一口座の扱い
+
+同じ `id` を持つ `BankAccount` は、同一の口座として扱ってください。
+
+余裕があれば、デバッグしやすい文字列表現も用意してください。
 
 ---
 
-## 1.5 発展：equals / hashCode / toString
+# 2. BankService クラス
 
-余裕があれば、以下も実装してください。
+## 2.1 役割
 
-### `equals(Object obj)`
+`BankService` は、複数の `BankAccount` を管理し、検索・送金・合計残高の計算を行うサービスクラスです。
 
-同じ `id` の `BankAccount` を同一口座とみなす。
+保持する情報は以下の通りです。
 
-### `hashCode()`
-
-`equals` をオーバーライドする場合は、`hashCode` もオーバーライドする。
-
-### `toString()`
-
-デバッグしやすい文字列表現を返す。
-
----
-
-# 2. BankService クラスの仕様
-
-複数の口座をまとめて管理し、送金などの操作を行うサービスクラスです。
-
----
-
-## 2.1 フィールド
-
-すべて `private` にしてください。
-
-* `accounts`（`BankAccount` の配列）
-
----
-
-## 2.2 コンストラクタ
-
-### `BankService(BankAccount[] accounts)`
-
-引数の配列を元に初期化します。
-
-以下のルールを守ってください。
-
-* 引数が `null` の場合は、長さ0の配列として扱う。
-* 配列内の `null` 要素は除去する。
-* 有効な口座データだけを隙間なく詰めた新しい配列を作成して保持する。
-* `BankAccount` オブジェクト自体もコピーする。
-
-### データ保護要件
-
-インスタンス生成後、次のものが外部で変更されても、`BankService` 内部の口座データが影響を受けないようにしてください。
-
-* 引数として渡された大元の `BankAccount[]` 配列
-* 大元の `BankAccount` オブジェクト
-
-つまり、次のような実装は禁止です。
-
-```java
-this.accounts = accounts;
+```text
+BankAccount の配列
 ```
 
-また、次のような実装も不十分です。
-
-```java
-newAccounts[index] = accounts[i];
-```
-
-`BankAccount` のコピーコンストラクタを使って、別インスタンスを作成してください。
+外部からフィールドを直接変更できないように設計してください。
 
 ---
 
-## 2.3 メソッド
+## 2.2 生成時のルール
 
-### `findById(int id)`
+`BankService` を生成するとき、`BankAccount` 配列を受け取ります。
 
-指定した `id` の口座オブジェクトを返す。  
-見つからなければ `null` を返す。
+以下のルールで内部に保存してください。
 
-ただし、内部の `BankAccount` をそのまま返してはいけません。  
-戻り値のオブジェクト経由で、勝手に内部データが操作されないようにしてください。
+```text
+引数が null の場合:
+  長さ0の配列として扱う
 
-つまり、次のような実装は禁止です。
+配列内に null 要素がある場合:
+  除外する
 
-```java
-return this.accounts[i];
+有効な BankAccount だけを、隙間なく詰めた配列として保持する
 ```
 
-### `transfer(int fromId, int toId, int amount)`
+## 外部データからの独立
 
-`fromId` の口座から `toId` の口座へ送金する。
+`BankService` を生成したあと、以下が外部で変更されても、`BankService` 内部の口座データが影響を受けないようにしてください。
 
-以下のいずれかの場合は失敗として `false` を返してください。
-
-* `amount` が `0` 以下の場合
-* 送金元が見つからない場合
-* 送金先が見つからない場合
-* 送金元の残高が不足している場合
-
-成功したら、送金元から引き出し、送金先へ入金して `true` を返してください。
-
-### BankAccount と BankService における `amount <= 0` の扱いの違い
-
-`BankAccount.deposit` や `BankAccount.withdraw` を直接呼ぶ場合、`amount <= 0` はメソッドの前提条件違反として `IllegalArgumentException` を投げます。
-
-一方、`BankService.transfer` は「送金リクエストが成立したかどうか」を返すサービスメソッドとして設計します。  
-そのため、この問題では `amount <= 0` の送金リクエストも「送金失敗」として `false` を返す仕様にします。
-
-この設計により、`transfer` は `amount <= 0` のときに内部で `withdraw` や `deposit` を呼ばず、先に `false` を返す必要があります。
-
-### 実装のポイント
-
-`transfer` の操作結果は、`BankService` が管理している内部の本物の口座データに反映されなければなりません。
-
-そのため、`transfer` 内で `findById` を使ってはいけません。  
-`findById` はデータ保護のためにコピーを返すメソッドだからです。
-
-内部操作専用に、本物の参照を返す `private` メソッドを作ってください。
-
-例：
-
-```java
-private BankAccount findInternalById(int id)
+```text
+引数として渡された BankAccount[] 配列
+配列内に入っていた BankAccount オブジェクト
 ```
-
-このメソッドは外部に公開しないため、内部の本物の `BankAccount` を返してよいです。
-
-### `totalBalance()`
-
-管理している全口座の残高の合計値を返す。
-
-このとき、配列の `index` と口座 `id` を混同しないでください。
-
-悪い例：
-
-```java
-for (int i = 0; i < accounts.length; i++) {
-    sum += findInternalById(i).getBalance();
-}
-```
-
-`i` は配列の何番目かを表す値であり、口座IDではありません。  
-単純に配列の中身を順番に見て合計してください。
-
-### `printAll()`
-
-全口座の `printInfo()` を順番に呼び出す。
 
 ---
 
-# 3. 動作確認用コード
+## 2.3 提供する操作
 
-作成したクラスが正しく仕様を満たしているか確認するため、`Main` クラスを作成し、以下の動作を検証してください。
+`BankService` では、以下の操作を提供してください。
+
+```text
+指定したIDの口座を取得する
+指定したID間で送金する
+管理している全口座の残高合計を取得する
+全口座の情報を表示する
+```
 
 ---
 
-## 3.1 正常系のテスト
+## 指定IDの口座取得
 
-* 口座を2つ作成し、`BankService` に登録する。
-* 片方の口座からもう片方の口座へ、正常に送金処理が行えることを確認する。
-* `printAll()` や `totalBalance()` を使って、内部データが正しく更新されたことを確認する。
+指定した `id` の口座を返してください。
 
-例：
+```text
+見つからない場合:
+  null
+```
+
+返した口座オブジェクト経由で、`BankService` 内部の口座データが変更されないようにしてください。
+
+---
+
+## 送金
+
+`fromId` の口座から `toId` の口座へ送金します。
+
+以下の場合は、送金失敗として `false` を返してください。
+
+```text
+amount <= 0
+送金元が見つからない
+送金先が見つからない
+送金元の残高が不足している
+```
+
+成功した場合は、送金元の残高を減らし、送金先の残高を増やして `true` を返してください。
+
+## BankAccount と BankService における失敗の扱い
+
+`BankAccount` の `deposit` / `withdraw` では、`amount <= 0` は口座操作として不正なので例外にします。
+
+一方、`BankService` の送金処理では、送金リクエスト全体が成立したかどうかを返す設計にします。  
+そのため、この問題では `amount <= 0` の送金リクエストは例外ではなく `false` として扱います。
+
+送金処理では、無効な金額で `deposit` や `withdraw` を呼ばないようにしてください。
+
+## 内部データの更新
+
+送金処理では、`BankService` が管理している内部の口座データを実際に変更してください。
+
+外部公開用の口座取得処理がコピーを返す設計の場合、その処理を送金内部で使うと、本物の残高が更新されません。  
+外部公開用の取得処理と、内部更新用の検索処理は役割を分けてください。
+
+---
+
+## 残高合計
+
+管理している全口座の残高合計を返してください。
+
+配列の位置番号と口座IDは別物として扱ってください。
+
+---
+
+## 全件表示
+
+管理している全口座の情報を順番に表示してください。
+
+---
+
+# 3. 動作確認
+
+`Main` クラスを作成し、以下の観点で動作確認してください。
+
+---
+
+## 3.1 正常な送金
 
 ```java
 BankAccount a = new BankAccount(101, "Taro", 1000);
@@ -302,54 +309,52 @@ boolean result = service.transfer(101, 102, 300);
 
 System.out.println(result); // true
 service.printAll();
-// 101 の残高が 700、102 の残高が 800 になっていること
+```
+
+確認すること。
+
+```text
+101 の残高が 700
+102 の残高が 800
+totalBalance も整合している
 ```
 
 ---
 
-## 3.2 業務上の失敗のテスト
+## 3.2 残高不足
 
-残高を超える金額を送金しようとした際、送金処理が失敗し、両者の残高が変わっていないことを確認してください。
+残高を超える金額を送金しようとした場合、送金に失敗し、残高が変わらないことを確認してください。
 
 ```java
 boolean result = service.transfer(101, 102, 100000);
 
 System.out.println(result); // false
 service.printAll();
-// 直前の残高から変わっていないこと
 ```
 
 ---
 
-## 3.3 契約違反のテスト
+## 3.3 不正な口座生成・口座操作
 
-`try-catch` 文を使用し、ある口座に対して不正な操作をしたときに、想定通り `IllegalArgumentException` が発生することを確認してください。
+`try-catch` を使い、不正な値を渡した場合に想定通り例外になることを確認してください。
 
-例：
-
-```java
-try {
-    a.deposit(-100);
-} catch (IllegalArgumentException e) {
-    System.out.println(e.getMessage());
-}
-```
-
-ほかにも、以下を確認するとよいです。
+確認例：
 
 ```java
 new BankAccount(0, "Invalid", 1000);
 new BankAccount(103, null, 1000);
 new BankAccount(104, "   ", 1000);
 new BankAccount(105, "Minus", -1);
+
+a.deposit(-100);
 a.withdraw(0);
 ```
 
 ---
 
-## 3.4 BankService.transfer の `amount <= 0` テスト
+## 3.4 BankService.transfer の不正金額
 
-`BankAccount.deposit` や `BankAccount.withdraw` では `amount <= 0` は例外ですが、`BankService.transfer` では `false` を返す仕様です。
+`BankAccount` 単体の入出金では `amount <= 0` は例外ですが、`BankService.transfer` では `false` を返す仕様です。
 
 ```java
 boolean result = service.transfer(101, 102, -100);
@@ -357,13 +362,18 @@ boolean result = service.transfer(101, 102, -100);
 System.out.println(result); // false
 ```
 
-このとき、例外が発生せず、内部データも変わっていないことを確認してください。
+確認すること。
+
+```text
+例外が発生しない
+内部データが変わらない
+```
 
 ---
 
-## 3.5 データ保護のテスト
+## 3.5 外部データからの独立
 
-### 元の口座オブジェクトを変更しても壊れないこと
+以下のような操作をしても、`BankService` 内部の口座データが壊れないことを確認してください。
 
 ```java
 BankAccount a = new BankAccount(201, "OriginalA", 1000);
@@ -377,10 +387,17 @@ b.withdraw(100);
 accounts[0] = new BankAccount(999, "External", 0);
 
 service.printAll();
-// service 内部の 201, 202 の口座が、生成時の状態を保っていること
 ```
 
-### findById で取得した口座を変更しても壊れないこと
+確認すること。
+
+```text
+service 内部の 201, 202 の口座が、生成時の状態を保っている
+```
+
+---
+
+## 3.6 取得した口座経由の変更
 
 ```java
 BankAccount found = service.findById(201);
@@ -392,33 +409,57 @@ if (found != null) {
 }
 
 service.printAll();
-// service 内部の口座名義・残高が変わっていないこと
+```
+
+確認すること。
+
+```text
+service 内部の口座名義・残高が変わっていない
 ```
 
 ---
 
-# 4. 実装後の確認問題
+# 4. 境界条件の確認
 
-実装後、次の問いに自分の言葉で答えてください。
+以下も確認してください。
 
-1. `validOwnerName` や `validBalance` を `static` にしてよい理由は何か。
-2. `deposit` や `withdraw` を `static` にしてはいけない理由は何か。
-3. `findById` がコピーを返すべき理由は何か。
-4. `transfer` が `findById` を使ってはいけない理由は何か。
-5. `transfer` のために、内部の本物を返す `private` メソッドを作る理由は何か。
-6. `totalBalance` で配列の `index` と口座 `id` を混同すると、なぜ壊れるのか。
-7. `withdraw` で、`amount <= 0` は例外にし、残高不足は `false` にする理由は何か。
-8. `BankAccount.deposit` では `amount <= 0` を例外にするのに、`BankService.transfer` では `amount <= 0` を `false` にする理由は何か。
-9. `equals` をオーバーライドした場合、なぜ `hashCode` もオーバーライドする必要があるのか。
+```text
+BankService に null 配列を渡す
+BankService に null 要素を含む配列を渡す
+存在しない fromId で transfer する
+存在しない toId で transfer する
+amount が 0 の transfer を呼ぶ
+amount が負の transfer を呼ぶ
+登録口座が0件の状態で totalBalance を呼ぶ
+登録口座が0件の状態で printAll を呼ぶ
+```
 
 ---
 
-# 5. ヒント
+# 5. 実装後の確認事項
+
+実装後、次の観点を説明できるようにしてください。
+
+```text
+1. 補正ではなく例外にした入力は何か。その理由。
+2. false で表した失敗は何か。その理由。
+3. 外部に返す口座と、送金で更新する口座を分ける必要がある理由。
+4. BankService が、外部から渡された配列や口座オブジェクトに影響されない理由。
+5. 残高合計で、配列の位置番号と口座IDを混同してはいけない理由。
+6. 同じIDの口座を同一口座として扱うために必要な設計。
+7. インスタンスの状態を使う処理と、引数だけで完結する処理の違い。
+```
+
+---
+
+# 6. ヒント
+
+必要になった場合だけ開いてください。
 
 <details>
-<summary>1. 例外とfalseの使い分けについて</summary>
+<summary>例外とfalseの使い分け</summary>
 
-例外は、主にメソッドの前提条件を破るような契約違反に使います。
+例外は、メソッドの前提条件を破るような入力に使います。
 
 例：
 
@@ -428,9 +469,7 @@ account.withdraw(0);
 new BankAccount(0, "Taro", 1000);
 ```
 
-これらは、操作として不正です。
-
-一方で `false` は、操作の形式自体は正しいが、条件が合わずに実行できなかった場合に使います。
+一方で、`false` は、操作の形式自体は正しいが、条件が合わずに実行できなかった場合に使います。
 
 例：
 
@@ -438,59 +477,25 @@ new BankAccount(0, "Taro", 1000);
 account.withdraw(10000);
 ```
 
-金額は正しいが、残高が足りない場合は、業務上普通に起こりうる失敗として `false` を返します。
+金額は正しいが残高が足りない場合は、業務上起こりうる失敗として `false` を返します。
 
 </details>
 
 <details>
-<summary>2. staticにしてよいメソッド、してはいけないメソッド</summary>
+<summary>外部公開用の取得処理と内部更新用の検索処理</summary>
 
-`static` にしてよいのは、特定のインスタンスの状態に依存しない処理です。
+外部公開用の取得処理では、呼び出し元が内部データを直接変更できないようにする必要があります。
 
-例：
+一方で、送金処理では `BankService` 内部で管理している本物の口座残高を更新する必要があります。
 
-```java
-private static int validBalance(int balance)
-```
-
-これは、引数 `balance` だけを見て判断できます。  
-`this.balance` や `this.accounts` を使いません。
-
-一方、`deposit`、`withdraw`、`transfer` は、特定のインスタンスの状態を読んだり書き換えたりします。
-
-例：
-
-```java
-this.balance += amount;
-this.balance -= amount;
-this.accounts
-```
-
-このような処理は `static` にしません。
+そのため、外部公開用の取得処理と、内部更新用の検索処理は役割を分けると実装しやすくなります。
 
 </details>
 
 <details>
-<summary>3. transfer（送金）メソッドの罠</summary>
+<summary>配列の位置番号と口座ID</summary>
 
-送金処理では、コピーデータではなく、`BankService` 内部に保存されている本物のデータの残高を更新する必要があります。
-
-もし、送金元の口座を探す際に `findById` を使ってしまうと、`findById` はデータ保護のためにコピーを返す仕様であるため、いくら残高を減らしても本物のデータは更新されません。
-
-外部公開用の `findById` とは別に、内部操作専用の検索メソッドを作ると綺麗に解決できます。
-
-例：
-
-```java
-private BankAccount findInternalById(int id)
-```
-
-</details>
-
-<details>
-<summary>4. 配列のindexとidの違い</summary>
-
-配列の `index` は、配列の何番目に入っているかを表します。
+配列の位置番号は、配列の何番目に入っているかを表します。
 
 ```java
 accounts[0]
@@ -498,24 +503,14 @@ accounts[1]
 accounts[2]
 ```
 
-一方、口座 `id` は、口座を識別するための番号です。
+口座IDは、口座を識別する番号です。
 
-```java
+```text
 101
 205
 999
 ```
 
 この2つは一致するとは限りません。
-
-したがって、次のように書くと壊れる可能性があります。
-
-```java
-for (int i = 0; i < accounts.length; i++) {
-    sum += findInternalById(i).getBalance();
-}
-```
-
-`i` は配列番号であって、口座IDではないからです。
 
 </details>
